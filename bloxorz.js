@@ -1,4 +1,3 @@
- var _ = require('mori');
  var Immutable = require('immutable');
 
  module.exports.solve = function(levelString) {
@@ -10,19 +9,19 @@
  	var isGoalFunc = isGoal(goalPos);
 
  	var startBlock = block(startPos, startPos);
- 	var startingMoveLists = Immutable.List(_.into_array(_.list(_.list(move(null, startBlock)))));
+ 	var startingMoveLists = Immutable.List([Immutable.List([move(null, startBlock)])]);
 
  	var sequence = moveSequence(startingMoveLists, isOnBoardFunc, 0);
- 	
- 	var solutions = _.filter(isGoalFunc, sequence);
+ 	console.log('sequence', sequence);
+ 	var solutions = sequence.filter(isGoalFunc, sequence);
 
- 	var solution = _.first(solutions);
+ 	var solution = solutions.first();
 
  	if(!solution){
  		throw new Error('No solution found');
  	}
 
- 	return _.reverse(_.map(function(move){ return move.direction; }, solution));
+ 	return solution;//_.reverse(_.map(function(move){ return move.direction; }, solution));
  }
 
 //######## DATA TYPES ######
@@ -42,15 +41,15 @@ function move(direction, newBlock) {
 
 function isOnBoard(levelArray) {
 	return function(pos) {
-		if(_.count(levelArray) === 0 
-		 || _.count(_.first(levelArray)) === 0
+		if(levelArray.length === 0 
+		 || levelArray[0].count() === 0
 		 || pos.row < 0
-		 || pos.row >= _.count(levelArray)
+		 || pos.row >= levelArray.length
 		 || pos.column < 0 
-		 || pos.column >= _.count(_.first(levelArray))) {
+		 || pos.column >= levelArray[0].count()) {
 			return false
 		}
-		return _.nth(_.nth(levelArray, pos.row), pos.column) != '-';
+		return levelArray[pos.row].get(pos.column) != '-';
 	}
 }
 
@@ -60,7 +59,7 @@ function infiniteBoard() {
 
 function isGoal(goalPos) {
 	return function(move) {
-		var block = _.first(move).block
+		var block = move.first().block
 		result = posEquals(block.a, goalPos) && isStanding(block);
 		return result;
 	}
@@ -147,46 +146,46 @@ function moveDown(b) {
 
 //######### SOLVER ########
 function moves(block) {
-	return _.list(
+	return Immutable.List([
 			move('left', moveLeft(block)),
 			move('right', moveRight(block)),
 			move('up', moveUp(block)),
-			move('down', moveDown(block)));
+			move('down', moveDown(block))]);
 }
 
 function legalMoves(block, isOnBoardFunc) {
-	return _.filter(function(move){
+	return moves(block).filter(function(move){
 		return isOnBoardFunc(move.block.a) && isOnBoardFunc(move.block.b);
-	}, moves(block))
+	});
 }
 
 function legalNewNextMovesList(moveList, isOnBoardFunc) {
-	var headBlock = _.first(moveList).block;
+	var headBlock = moveList.first().block;
 	var possibleMoves = legalMoves(headBlock, isOnBoardFunc);
-	var alreadyVisitedBlocks = _.map(function(move){ 
+	var alreadyVisitedBlocks = moveList.map(function(move){ 
 		return move.block; 
-	}, moveList);
+	});
 	var newPossibleMoves = movesForBlocksThatHaventBeenVisited(possibleMoves, alreadyVisitedBlocks)
-	return _.map(function(move) {
-		return _.cons(move, moveList);
-	}, newPossibleMoves);
+	return newPossibleMoves.map(function(move) {
+		return moveList.unshift(move);
+	});
 }
 
 function movesForBlocksThatHaventBeenVisited(possibleMoves, alreadyVisitedBlocks){
-	return _.filter(function(move){
-		return _.every(function(block) {
+	return possibleMoves.filter(function(move){
+		return alreadyVisitedBlocks.every(function(block) {
 			return !blockEquals(move.block, block);
-		}, alreadyVisitedBlocks);
-	}, possibleMoves);
+		});
+	});
 }
 
 function moveSequence(moveLists, isOnBoardFunc){
 	console.log('recursing');
 	if(moveLists.count() > 0) {
-		var nextTierOfMoves = _.into_array(_.mapcat(function(moveList){
+		var nextTierOfMoves = moveLists.flatMap(function(moveList){
 			return legalNewNextMovesList(moveList, isOnBoardFunc);
-		}, moveLists));
-		return moveLists.concat(moveSequence(nextTierOfMoves, isOnBoardFunc));
+		});
+		return moveLists.concat( moveSequence(nextTierOfMoves, isOnBoardFunc) );
 	} else {
 		return List();
 	}
@@ -196,26 +195,23 @@ function moveSequence(moveLists, isOnBoardFunc){
 //######### SETUP ###########
 
  function buildLevelArray(levelString) {
- 	return _.map(function(row){
- 		return _.filter(function(char) {
+ 	return levelString.split(/\r?\n/).map(function(row){
+ 		return Immutable.List(row).filter(function(char) {
  			return char.match(/-|\w/);
- 		}, _.seq(row));
- 	}, levelString.split(/\r?\n/));
+ 		});
+ 	});
  }
 
  function findChar(levelArray, character) {
  	function iter(rowNum, columnNum) {
- 		if(!_.is_seq(levelArray)){
- 			throw new Error('weird');
- 		}
- 		if(rowNum >= _.count(levelArray)) {
+ 		if(rowNum >= levelArray.length) {
  			throw new Error('char not found');
  		}
- 		var row = _.nth(levelArray, rowNum)
- 		if(columnNum >= _.count(row)) {
+ 		var row = levelArray[rowNum];
+ 		if(columnNum >= row.count()) {
  			return iter(++rowNum, 0);
  		}
- 		var s = _.nth(row, columnNum);
+ 		var s = row.get(columnNum);
  		if(s === character) {
  			return pos(rowNum, columnNum);
  		}
@@ -223,4 +219,3 @@ function moveSequence(moveLists, isOnBoardFunc){
  	}
  	return iter(0,0);
  }
-
