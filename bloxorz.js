@@ -1,6 +1,7 @@
  var _ = require('mori');
+ var Immutable = require('immutable');
 
- function solve(levelString) {
+ module.exports.solve = function(levelString) {
  	var levelArray = buildLevelArray(levelString);
  	var startPos = findChar(levelArray, 'S');
  	var goalPos = findChar(levelArray, 'G');
@@ -9,20 +10,19 @@
  	var isGoalFunc = isGoal(goalPos);
 
  	var startBlock = block(startPos, startPos);
- 	var startingMoveLists = _.list(_.list(move(null, startBlock)));
+ 	var startingMoveLists = Immutable.List(_.into_array(_.list(_.list(move(null, startBlock)))));
 
  	var sequence = moveSequence(startingMoveLists, isOnBoardFunc, 0);
  	
  	var solutions = _.filter(isGoalFunc, sequence);
- 	console.log(solutions);
 
- 	var answer = _.first(solutions);
+ 	var solution = _.first(solutions);
 
- 	if(!answer){
+ 	if(!solution){
  		throw new Error('No solution found');
  	}
 
- 	console.log(answer);
+ 	return _.reverse(_.map(function(move){ return move.direction; }, solution));
  }
 
 //######## DATA TYPES ######
@@ -61,7 +61,8 @@ function infiniteBoard() {
 function isGoal(goalPos) {
 	return function(move) {
 		var block = _.first(move).block
-		return posEquals(block.a, goalPos) && isStanding(block);
+		result = posEquals(block.a, goalPos) && isStanding(block);
+		return result;
 	}
 }
 
@@ -180,13 +181,14 @@ function movesForBlocksThatHaventBeenVisited(possibleMoves, alreadyVisitedBlocks
 }
 
 function moveSequence(moveLists, isOnBoardFunc){
-	if(_.count(moveLists) > 0) {
-		var nextTierOfMoves = _.mapcat(function(moveList){
+	console.log('recursing');
+	if(moveLists.count() > 0) {
+		var nextTierOfMoves = _.into_array(_.mapcat(function(moveList){
 			return legalNewNextMovesList(moveList, isOnBoardFunc);
-		}, moveLists);
-		return _.concat(moveLists, moveSequence(nextTierOfMoves, isOnBoardFunc));
+		}, moveLists));
+		return moveLists.concat(moveSequence(nextTierOfMoves, isOnBoardFunc));
 	} else {
-		return _.list();
+		return List();
 	}
 }
 
@@ -203,27 +205,22 @@ function moveSequence(moveLists, isOnBoardFunc){
 
  function findChar(levelArray, character) {
  	function iter(rowNum, columnNum) {
+ 		if(!_.is_seq(levelArray)){
+ 			throw new Error('weird');
+ 		}
  		if(rowNum >= _.count(levelArray)) {
  			throw new Error('char not found');
  		}
  		var row = _.nth(levelArray, rowNum)
  		if(columnNum >= _.count(row)) {
- 			return findChar(++rowNum, 0);
+ 			return iter(++rowNum, 0);
  		}
  		var s = _.nth(row, columnNum);
  		if(s === character) {
  			return pos(rowNum, columnNum);
  		}
  		return iter(rowNum, ++columnNum);
-
  	}
  	return iter(0,0);
  }
-
-
-levelString =  '--SG--\n'
-	         + '--oo--\n'
-	         + '--oo--';
-
-solve(levelString);
 
