@@ -1,2 +1,2 @@
 # functional-javascript
-An example of pure functional programming in Ruby using the Hamster library to solve Bloxorz (http://www.coolmath-games.com/0-bloxorz/).  Prepared as part of a presentation on Functional Ruby given at CodeMash, OH on 1/8/2015 and at the STLRuby meetup on 9/9/2014.  Slides are here: https://docs.google.com/presentation/d/1HoW4Yp9TJoEwm_Lce_CUxo9mrCqqFuLmH1dC9JyCTgE/edit#slide=id.p
+An example of pure functional programming in JavaScript using the Mori library to solve Bloxorz (http://www.coolmath-games.com/0-bloxorz/).  Prepared as part of a presentation on Functional JavaScript given at the STLJS meetup on 1/15/2015.  Slides are here: https://docs.google.com/presentation/d/1xPxMXCVLqPzSUarK_aTp2S9DOtH63axihk6kbyMOxcI/edit?usp=sharing
