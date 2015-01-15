@@ -9,9 +9,20 @@
  	var isGoalFunc = isGoal(goalPos);
 
  	var startBlock = block(startPos, startPos);
- 	var startingMoveList = _.list(_.list(move(null, startBlock)));
+ 	var startingMoveLists = _.list(_.list(move(null, startBlock)));
 
- 	console.log(legalNewNextMovesList(startingMoveList, isOnBoardFunc));
+ 	var sequence = moveSequence(startingMoveLists, isOnBoardFunc, 0);
+ 	
+ 	var solutions = _.filter(isGoalFunc, sequence);
+ 	console.log(solutions);
+
+ 	var answer = _.first(solutions);
+
+ 	if(!answer){
+ 		throw new Error('No solution found');
+ 	}
+
+ 	console.log(answer);
  }
 
 //######## DATA TYPES ######
@@ -48,13 +59,19 @@ function infiniteBoard() {
 }
 
 function isGoal(goalPos) {
-	return function(block) {
+	return function(move) {
+		var block = _.first(move).block
 		return posEquals(block.a, goalPos) && isStanding(block);
 	}
 }
 
 function posEquals(a, b) {
 	return a.row === b.row && a.column === b.column;
+}
+
+function blockEquals(blockA, blockB) {
+	var b = posEquals(blockA.a, blockB.a) && posEquals(blockA.b, blockB.b);
+	return b; 
 }
 
 function left(p) {
@@ -139,26 +156,39 @@ function moves(block) {
 function legalMoves(block, isOnBoardFunc) {
 	return _.filter(function(move){
 		return isOnBoardFunc(move.block.a) && isOnBoardFunc(move.block.b);
-	},moves(block))
+	}, moves(block))
 }
 
 function legalNewNextMovesList(moveList, isOnBoardFunc) {
-	var possibleMoves = legalMoves(_.first(moveList).block, isOnBoardFunc);
+	var headBlock = _.first(moveList).block;
+	var possibleMoves = legalMoves(headBlock, isOnBoardFunc);
 	var alreadyVisitedBlocks = _.map(function(move){ 
 		return move.block; 
 	}, moveList);
-	var newPossibleMoves = _.filter(function(move){
-		return _.some(function(block) {
-			return _.equals(move.block, block);
-		}, alreadyVisitedBlocks);
-	}, possibleMoves);
+	var newPossibleMoves = movesForBlocksThatHaventBeenVisited(possibleMoves, alreadyVisitedBlocks)
 	return _.map(function(move) {
 		return _.cons(move, moveList);
 	}, newPossibleMoves);
 }
 
+function movesForBlocksThatHaventBeenVisited(possibleMoves, alreadyVisitedBlocks){
+	return _.filter(function(move){
+		return _.every(function(block) {
+			return !blockEquals(move.block, block);
+		}, alreadyVisitedBlocks);
+	}, possibleMoves);
+}
 
-
+function moveSequence(moveLists, isOnBoardFunc){
+	if(_.count(moveLists) > 0) {
+		var nextTierOfMoves = _.mapcat(function(moveList){
+			return legalNewNextMovesList(moveList, isOnBoardFunc);
+		}, moveLists);
+		return _.concat(moveLists, moveSequence(nextTierOfMoves, isOnBoardFunc));
+	} else {
+		return _.list();
+	}
+}
 
 
 //######### SETUP ###########
