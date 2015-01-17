@@ -12,7 +12,6 @@
  	var startingMoveLists = Immutable.List([Immutable.List([move(null, startBlock)])]);
 
  	var sequence = moveSequence(startingMoveLists, isOnBoardFunc, 0);
- 	console.log('sequence', sequence);
  	var solutions = sequence.filter(isGoalFunc, sequence);
 
  	var solution = solutions.first();
@@ -21,7 +20,7 @@
  		throw new Error('No solution found');
  	}
 
- 	return solution;//_.reverse(_.map(function(move){ return move.direction; }, solution));
+ 	return solution.map(function(move){ return move.direction; }).reverse();
  }
 
 //######## DATA TYPES ######
@@ -187,7 +186,7 @@ function moveSequence(moveLists, isOnBoardFunc){
 		});
 		return moveLists.concat( moveSequence(nextTierOfMoves, isOnBoardFunc) );
 	} else {
-		return List();
+		return Immutable.List();
 	}
 }
 
