@@ -1,4 +1,5 @@
  var Immutable = require('immutable');
+ var Seq = Immutable.Seq;
 
  module.exports.solve = function(levelString) {
  	var levelArray = buildLevelArray(levelString);
@@ -11,7 +12,7 @@
  	var startBlock = block(startPos, startPos);
  	var startingMoveLists = Immutable.List([Immutable.List([move(null, startBlock)])]);
 
- 	var sequence = moveSequence(startingMoveLists, isOnBoardFunc, 0);
+ 	var sequence = flattenTreeLazy(isOnBoardFunc, startingMoveLists);
  	var solutions = sequence.filter(isGoalFunc, sequence);
 
  	var solution = solutions.first();
@@ -178,16 +179,14 @@ function movesForBlocksThatHaventBeenVisited(possibleMoves, alreadyVisitedBlocks
 	});
 }
 
-function moveSequence(moveLists, isOnBoardFunc){
-	console.log('recursing');
-	if(moveLists.count() > 0) {
-		var nextTierOfMoves = moveLists.flatMap(function(moveList){
-			return legalNewNextMovesList(moveList, isOnBoardFunc);
-		});
-		return moveLists.concat( moveSequence(nextTierOfMoves, isOnBoardFunc) );
-	} else {
-		return Immutable.List();
-	}
+function flattenTreeLazy(isOnBoardFunc, moveLists){
+  return moveLists.isEmpty() ? moveLists : Seq(moveLists).concat(Seq([
+      moveLists.flatMap(function(node){
+        console.log('flat mapping');
+        return legalNewNextMovesList(node, isOnBoardFunc); 
+      })
+    ]).flatMap(flattenTreeLazy.bind(null, isOnBoardFunc))
+  );
 }
 
 
