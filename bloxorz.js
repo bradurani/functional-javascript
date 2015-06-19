@@ -1,5 +1,6 @@
  var Immutable = require('immutable');
  var Seq = Immutable.Seq;
+ var List = Immutable.List;
 
  module.exports.solve = function(levelString) {
  	var levelArray = buildLevelArray(levelString);
@@ -10,9 +11,10 @@
  	var isGoalFunc = isGoal(goalPos);
 
  	var startBlock = block(startPos, startPos);
- 	var startingMoveLists = Immutable.List([Immutable.List([move(null, startBlock)])]);
+ 	var startingMoveLists = List([List([move(null, startBlock)])]);
 
  	var sequence = flattenTreeLazy(isOnBoardFunc, startingMoveLists);
+ 	
  	var solutions = sequence.filter(isGoalFunc, sequence);
 
  	var solution = solutions.first();
@@ -146,7 +148,7 @@ function moveDown(b) {
 
 //######### SOLVER ########
 function moves(block) {
-	return Immutable.List([
+	return List([
 			move('left', moveLeft(block)),
 			move('right', moveRight(block)),
 			move('up', moveUp(block)),
@@ -194,7 +196,7 @@ function flattenTreeLazy(isOnBoardFunc, moveLists){
 
  function buildLevelArray(levelString) {
  	return levelString.split(/\r?\n/).map(function(row){
- 		return Immutable.List(row).filter(function(char) {
+ 		return List(row).filter(function(char) {
  			return char.match(/-|\w/);
  		});
  	});
