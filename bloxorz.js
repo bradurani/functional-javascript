@@ -15,7 +15,7 @@
 
  	var sequence = flattenTreeLazy(isOnBoardFunc, startingMoveLists);
  	
- 	var solutions = sequence.filter(isGoalFunc, sequence);
+ 	var solutions = sequence.filter(isGoalFunc);
 
  	var solution = solutions.first();
 
@@ -184,7 +184,6 @@ function movesForBlocksThatHaventBeenVisited(possibleMoves, alreadyVisitedBlocks
 function flattenTreeLazy(isOnBoardFunc, moveLists){
   return moveLists.isEmpty() ? moveLists : Seq(moveLists).concat(Seq([
       moveLists.flatMap(function(node){
-        console.log('flat mapping');
         return legalNewNextMovesList(node, isOnBoardFunc); 
       })
     ]).flatMap(flattenTreeLazy.bind(null, isOnBoardFunc))
